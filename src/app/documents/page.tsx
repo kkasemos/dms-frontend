@@ -32,46 +32,39 @@ export default function DocumentsPage() {
   }, []);
 
   const handleUpload = async (file) => {
-    const fileType = file.name.split('.').pop();
-    const reader = new FileReader();
+    const maxSizeInBytes = 50 * 1024 * 1024; // 50 MB in bytes
 
-    reader.onload = async () => {
-      const base64Content = reader.result.split(',')[1]; // Extract Base64 content
+    if (file.size > maxSizeInBytes) {
+      message.error("File size exceeds the 50 MB limit.");
+      return false; // Prevent auto-upload
+    }
 
-      const requestBody = {
-        title: file.name,
-        content: base64Content,
-        fileType: fileType.toUpperCase(),
-        ownerID: 1, // Assume ownerID is 1 for demonstration purposes
-      };
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', file.name);
+    formData.append('ownerID', 1); // Assume ownerID is 1 for demonstration purposes
 
-      try {
-        const response = await fetch('http://localhost:3000/documents', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody),
-        });
+    try {
+      const response = await fetch('http://localhost:3000/documents', {
+        method: 'POST',
+        body: formData,
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          const newDocument = {
-            id: data.documentID,
-            name: data.title,
-            lastModified: new Date(data.uploadTimestamp).toISOString().split('T')[0],
-          };
-          setDocuments([...documents, newDocument]);
-          message.success(`${file.name} uploaded successfully.`);
-        } else {
-          message.error(`${file.name} upload failed. Please try again.`);
-        }
-      } catch (error) {
-        message.error(`An error occurred: ${error.message}`);
+      if (response.ok) {
+        const data = await response.json();
+        const newDocument = {
+          id: data.documentID,
+          name: data.title,
+          lastModified: new Date(data.uploadTimestamp).toISOString().split('T')[0],
+        };
+        setDocuments([...documents, newDocument]);
+        message.success(`${file.name} uploaded successfully.`);
+      } else {
+        message.error(`${file.name} upload failed. Please try again.`);
       }
-    };
-
-    reader.readAsDataURL(file);
+    } catch (error) {
+      message.error(`An error occurred: ${error.message}`);
+    }
     return false; // Prevent auto-upload
   };
 
