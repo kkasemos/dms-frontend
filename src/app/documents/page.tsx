@@ -33,6 +33,12 @@ export default function DocumentsPage() {
 
   const handleUpload = async (file) => {
     const maxSizeInBytes = 50 * 1024 * 1024; // 50 MB in bytes
+    const allowedFormats = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png'];
+
+    if (!allowedFormats.includes(file.type)) {
+      message.error("Unsupported file format. Allowed formats: PDF, DOCX, XLSX, JPEG, PNG.");
+      return false; // Prevent auto-upload
+    }
 
     if (file.size > maxSizeInBytes) {
       message.error("File size exceeds the 50 MB limit.");
@@ -42,7 +48,7 @@ export default function DocumentsPage() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', file.name);
-    formData.append('ownerID', 1); // Assume ownerID is 1 for demonstration purposes
+    formData.append('ownerID', "1"); // Assume ownerID is 1 for demonstration purposes
 
     try {
       const response = await fetch('http://localhost:3000/documents', {
